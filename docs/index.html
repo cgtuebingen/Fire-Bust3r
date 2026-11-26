@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fire-Bust3r: Learning to Reconstruct and Resimulate Fire from a Single Video</title>
+  <meta name="description" content="Fire-Bust3r recovers the 3D fields, source and solver parameters of a real fire from a single video, so that a production solver can resimulate it.">
+  <meta property="og:title" content="Fire-Bust3r: Learning to Reconstruct and Resimulate Fire from a Single Video">
+  <meta property="og:description" content="From one video of a real fire to 3D fields and a production simulation.">
+  <meta property="og:image" content="static/images/teaser.png">
+  <link rel="icon" href="static/images/mascot.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+
+<header class="hero wrap">
+  <img class="logo" src="static/images/mascot.svg" alt="Fire-Bust3r mascot">
+  <h1>Fire-Bust<span class="three">3</span>r</h1>
+  <p class="subtitle">Learning to Reconstruct and Resimulate Fire from a Single Video</p>
+  <p class="authors">
+    <span>Tobias Sautter</span>
+    <span>Jan-Niklas Dihlmann</span>
+    <span>Hendrik P. A. Lensch</span>
+  </p>
+  <p class="affil">University of Tübingen</p>
+  <div class="buttons">
+    <!-- TODO: enable with https://arxiv.org/abs/<id> once the preprint is listed -->
+    <a class="btn disabled" href="#" aria-disabled="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6V2zm8 1.5V8h4.5L14 3.5zM8 12h8v1.5H8V12zm0 3h8v1.5H8V15zm0 3h5v1.5H8V18z"/></svg>Paper (soon)</a>
+    <a class="btn disabled" href="#" aria-disabled="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v2H4V4zm0 5h16v2H4V9zm0 5h10v2H4v-2zm0 5h10v2H4v-2z"/></svg>arXiv (soon)</a>
+    <a class="btn" href="#video">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5z"/></svg>Video</a>
+    <a class="btn" href="https://github.com/cgtuebingen/Fire-Bust3r">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>Code</a>
+  </div>
+</header>
+
+<main>
+
+<section id="video" class="wrap main-video">
+  <figure>
+    <video controls preload="metadata" playsinline poster="static/images/poster_method_video.jpg">
+      <source src="static/videos/method_video.mp4" type="video/mp4">
+    </video>
+  </figure>
+</section>
+
+<section class="wrap">
+  <figure>
+    <img src="static/images/teaser.png" alt="Teaser: input video, 3D fields over time and per frame, resimulation, downstream use in VFX, games and editing">
+    <figcaption><strong>From one video of a real fire to 3D fields and simulation.</strong>
+      Fire-Bust3r reconstructs the 3D fields of a production solver in every frame (Output 1: flame, temperature, velocity and source)
+      and estimates the solver parameters, so that a production solver can resimulate the fire (Output 2) or simulate it with new settings,
+      such as wind from the left. Both outputs can be imported into VFX and game pipelines.</figcaption>
+  </figure>
+</section>
+
+<section class="wrap abstract">
+  <h2>Abstract</h2>
+  <p>We present Fire-Bust3r, a method that recovers an editable 3D fire from a single video of a real fire.
+  It outputs the fields of a production fire solver (flame, temperature, smoke density, velocity and source region), so the fire can be
+  rendered from novel viewpoints, edited and simulated further. No previous method recovers such a solver state from a single video:
+  single-view methods reconstruct smoke and accurate fire capture so far required several calibrated cameras. Reconstructing fire in 3D is
+  severely underconstrained, because flames are emissive, translucent and turbulent. A single image leaves their depth unobserved.
+  We learn the missing depth from the solver's output fields themselves. We simulated 400 fires (100,000 states) and train a generative
+  model on their compressed fields. Conditioned on image features lifted along the camera rays, it generates the full 3D state of the fire,
+  including the depth that the camera never saw. At test time, a fire-specific differentiable renderer guides the sampler towards the input
+  view while the learned prior fills in the unseen depth. In an inverse simulation step, we drag the flame back along the predicted velocity
+  into the source region to improve the predicted source. We then estimate the solver parameters from the video's motion and shape.
+  Fire-Bust3r outperforms single-view smoke reconstruction and image-to-3D baselines and it resimulates fires from stock footage.
+  The result is either the 3D fields of every frame or a full simulation that is ready to be used and edited.</p>
+</section>
+
+<section class="wrap">
+  <h2>Method</h2>
+  <p class="lead">A generative model trained on simulated fires lifts the video into the fields of a production solver; an inverse simulation
+    step then recovers the source and the solver parameters.</p>
+  <figure class="white-fig">
+    <img src="static/images/pipeline.png" alt="Fire-Bust3r pipeline overview">
+  </figure>
+</section>
+
+<section class="wrap">
+  <h2>3D fields from one video</h2>
+  <p class="lead">Stitched over time, the reconstructed fields follow the footage frame by frame.</p>
+  <div class="grid three">
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_stitch_MIX47818.jpg" src="static/videos/stitch_MIX47818.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Our flame field</span></div>
+    </figure>
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_stitch_GOF010.jpg" src="static/videos/stitch_GOF010.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Our flame field</span></div>
+    </figure>
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_stitch_MIX32352s.jpg" src="static/videos/stitch_MIX32352s.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Our flame field</span></div>
+    </figure>
+  </div>
+  <p class="credit">Karma render of our flame field in the footage's colours.</p>
+</section>
+
+<section class="wrap">
+  <h2>Novel views</h2>
+  <p class="lead">The fields are full 3D volumes, so the fire can be seen from any side.</p>
+  <div class="grid two">
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_orbit_MIX47818.jpg" src="static/videos/orbit_MIX47818.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Orbit around our fields</span></div>
+    </figure>
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_orbit_GOF010.jpg" src="static/videos/orbit_GOF010.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Orbit around our fields</span></div>
+    </figure>
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_orbit_GOF012.jpg" src="static/videos/orbit_GOF012.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Orbit around our fields</span></div>
+    </figure>
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_orbit_MIX32352s.jpg" src="static/videos/orbit_MIX32352s.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Orbit around our fields</span></div>
+    </figure>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Resimulation in a production solver</h2>
+  <p class="lead">The recovered source and parameters, simulated from an empty box in Houdini Pyro and rendered with Karma.</p>
+  <div class="grid two">
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_resim_houdini_GOF003.jpg" src="static/videos/resim_houdini_GOF003.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Resimulation</span></div>
+    </figure>
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_resim_houdini_GOF010.jpg" src="static/videos/resim_houdini_GOF010.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Resimulation</span></div>
+    </figure>
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_resim_houdini_MIX47311.jpg" src="static/videos/resim_houdini_MIX47311.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Resimulation</span></div>
+    </figure>
+    <figure class="tile">
+      <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_resim_houdini_MIX514s.jpg" src="static/videos/resim_houdini_MIX514s.mp4"></video>
+      <div class="labels"><span>Footage</span><span>Resimulation</span></div>
+    </figure>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Edit it like any simulation</h2>
+  <p class="lead">Change the solver or the shader, then simulate again.</p>
+  <figure class="tile">
+    <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_edits_GOF006.jpg" src="static/videos/edits_GOF006.mp4"></video>
+    <div class="labels"><span>Resimulation</span><span>+ Strong wind</span><span>Viscous, calm</span><span>Turbulent</span></div>
+  </figure>
+  <figure class="tile" style="margin-top:18px">
+    <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_edits_MIX47311.jpg" src="static/videos/edits_MIX47311.mp4"></video>
+    <div class="labels"><span>Resimulation</span><span>Fireball</span><span>New colour</span><span>Calm, viscous flames</span></div>
+  </figure>
+</section>
+
+<section class="wrap">
+  <h2>Into a VFX shot</h2>
+  <p class="lead">Our resimulation of a stock campfire, rendered and composited into a new scene.</p>
+  <figure>
+    <video autoplay muted loop playsinline preload="metadata" poster="static/images/poster_vfx_comp_v16c.jpg" src="static/videos/vfx_comp_v16c.mp4"></video>
+  </figure>
+</section>
+
+<section class="wrap" id="bibtex">
+  <h2>BibTeX</h2>
+  <!-- TODO: fill in the arXiv id once the preprint is listed -->
+<pre class="bibtex">@article{sautter2026firebust3r,
+  title   = {Fire-Bust3r: Learning to Reconstruct and Resimulate Fire from a Single Video},
+  author  = {Sautter, Tobias and Dihlmann, Jan-Niklas and Lensch, Hendrik P. A.},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</pre>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>Footage.</strong> GoF clips: Gaussians on Fire dataset (Nazarenus et al.,
+      <a href="https://arxiv.org/abs/2511.22459">arXiv:2511.22459</a>), <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+      Campfire clips: <a href="https://mixkit.co/">Mixkit</a> stock footage (Mixkit Restricted License, educational use).
+      Simulations and renders: Houdini Pyro and Karma.</p>
+    <p><a href="https://github.com/cgtuebingen">Computer Graphics, University of Tübingen</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
